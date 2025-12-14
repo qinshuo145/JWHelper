@@ -1,14 +1,18 @@
 <div align="center">
   <img src="assets/images/logo.png" alt="Logo" width="120" height="120">
   
-  # 教务小助手 (JiaoWuXiTong Mobile)
+本Flutter项目的核心逻辑来源于以下Python项目：
+- 项目名称：[山东体育学院教务小助手](https://github.com/Chendayday-2005/JiaoWuXiTong)
+- 原作者：[@Chendayday-2005](https://github.com/Chendayday-2005)
+
+# 教务小助手 (JiaoWuXiTong Helper)
 </div>
 
-这是一个基于 Flutter 开发的教务系统移动端客户端，旨在为学生提供便捷的教务信息查询服务。本项目适配了 `jw.sdpei.edu.cn` 教务系统，支持多平台运行（Android, iOS, Windows, macOS, Linux, Web）。
+这是一个基于 Flutter 开发的教务系统移动端客户端，旨在为学生提供便捷的教务信息查询服务。
 
 ## ✨ 功能特性
 
-*   **用户登录**: 支持教务系统账号登录，自动管理会话（Cookie）。
+*   **用户登录**: 支持教务系统账号登录，自动管理会话。
 *   **课表查询**: 查看个人学期课表，支持周次切换。
 *   **成绩查询**: 快速查询各学期成绩详情。
 *   **学业进度**: 查看培养方案完成情况及学业进度。
