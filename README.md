@@ -117,4 +117,4 @@ lib/
 
 ## 📄 许可证
 
-[MIT License](LICENSE)
+[GPL3.0 License](LICENSE)
