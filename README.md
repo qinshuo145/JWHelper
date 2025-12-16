@@ -59,7 +59,8 @@ flutter run --release
 ```bash
 # 构建 Release APK
 flutter build apk --release
-
+# 构建适用不同架构，系统版本的APK
+flutter build apk --release --obfuscate --split-debug-info=./debug-info --split-per-abi
 # 构建 App Bundle (用于 Google Play)
 flutter build appbundle --release
 ```
@@ -70,7 +71,25 @@ flutter build appbundle --release
 *需要 macOS 环境和 Xcode*
 
 ```bash
+#普通搭建
 flutter build ios --release
+```
+```bash
+#无签名
+flutter build ios --release --no-codesign
+#生成app后：
+
+# 1. 创建一个名为 Payload 的文件夹
+mkdir Payload
+
+# 2. 将生成的 Runner.app 复制到 Payload 文件夹中
+cp -r build/ios/iphoneos/Runner.app Payload/
+
+# 3. 将 Payload 文件夹压缩为 zip
+zip -r -y Payload.zip Payload/
+
+# 4. 将 zip 重命名为 ipa
+mv Payload.zip app-unsigned.ipa
 ```
 
 ### Windows (.exe)
