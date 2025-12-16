@@ -31,7 +31,7 @@ class ProgressService {
       // Strategy: Direct ID extraction based on provided HTML structure
       Map<String, String> idMap = {
         'lblMainAvgCreditHour': '学位课程绩点',
-        'spAllCredit': '主修与方案外获得学分',
+        // 'spAllCredit': '主修与方案外获得学分', // Removed as it's not returned by server
         'lblAcquiredCreditsInProg2': '已获得学分',
         'lblLeastCreditsOfProg': '要求最低学分',
       };
@@ -159,19 +159,43 @@ class ProgressService {
         }
       }
 
-      // Fallback: Calculate "Major & Extra Credits" if missing from HTML
-      // Since the HTML field might be populated by JS, we calculate it manually by summing up all groups.
-      bool hasTotalCredits = basicInfo.any((i) => i.label.contains("主修与方案外获得学分"));
-      if (!hasTotalCredits && groups.isNotEmpty) {
-        double total = 0;
-        for (var g in groups) {
-          total += g.earned;
+      // Calculate "Major & Extra Credits" (主修与方案外获得学分)
+      // Formula: In-Program Credits (已获得学分) + Out-of-Program Credits (方案外课程已获学分)
+      // Since the HTML field might be populated by JS or not returned, we calculate it manually.
+      
+      // Try to find "Extra Credits" (Out of Program)
+      String? extraCreditsStr;
+      var extraCreditsEl = doc.querySelector('#lblAcquiredCreditsOutOfProg2');
+      if (extraCreditsEl != null) {
+        extraCreditsStr = extraCreditsEl.text.trim();
+      }
+
+      // Try to calculate from In-Program + Out-of-Program
+      var inProgInfo = basicInfo.firstWhere((i) => i.label == "已获得学分", orElse: () => ProgressInfo(label: "", value: ""));
+      
+      if (inProgInfo.value.isNotEmpty && extraCreditsStr != null) {
+          double inProg = double.tryParse(inProgInfo.value) ?? 0;
+          double outProg = double.tryParse(extraCreditsStr) ?? 0;
+          double total = inProg + outProg;
+          String value = total % 1 == 0 ? total.toInt().toString() : total.toString();
+          
+          // Remove existing if any (e.g. from table scan)
+          basicInfo.removeWhere((i) => i.label == "主修与方案外获得学分");
+          basicInfo.insert(0, ProgressInfo(label: "主修与方案外获得学分", value: value));
+      } else {
+        // Fallback: Sum up groups if calculation failed
+        bool hasTotalCredits = basicInfo.any((i) => i.label.contains("主修与方案外获得学分"));
+        if (!hasTotalCredits && groups.isNotEmpty) {
+          double total = 0;
+          for (var g in groups) {
+            total += g.earned;
+          }
+          // Format: 110.0 -> 110, 110.5 -> 110.5
+          String value = total % 1 == 0 ? total.toInt().toString() : total.toString();
+          
+          // Insert at the beginning or appropriate position
+          basicInfo.insert(0, ProgressInfo(label: "主修与方案外获得学分", value: value));
         }
-        // Format: 110.0 -> 110, 110.5 -> 110.5
-        String value = total % 1 == 0 ? total.toInt().toString() : total.toString();
-        
-        // Insert at the beginning or appropriate position
-        basicInfo.insert(0, ProgressInfo(label: "主修与方案外获得学分", value: value));
       }
       
       return {

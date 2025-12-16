@@ -55,6 +55,7 @@ class DataProvider with ChangeNotifier {
 
   Future<void> loadGrades({bool forceRefresh = false}) async {
     if (_gradesLoaded && !forceRefresh) return;
+    if (_gradesLoading) return;
     if (_username.isEmpty) return; // Don't load if no user
 
     _gradesLoading = true;
@@ -72,8 +73,8 @@ class DataProvider with ChangeNotifier {
           final DateTime lastFetchTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
           final DateTime now = DateTime.now();
 
-          // Cache is valid for 1 day
-          if (now.difference(lastFetchTime).inDays < 1) {
+          // Cache is valid for 30 days
+          if (now.difference(lastFetchTime).inDays < 30) {
             final List<dynamic> decoded = jsonDecode(cachedData);
             _grades = decoded.map((e) => Grade.fromJson(e)).toList();
             _gradesLoaded = true;
@@ -126,6 +127,7 @@ class DataProvider with ChangeNotifier {
 
   Future<void> loadSchedule({bool forceRefresh = false}) async {
     if (_scheduleLoaded && !forceRefresh) return;
+    if (_scheduleLoading) return;
     if (_username.isEmpty) return;
 
     _scheduleLoading = true;
@@ -143,8 +145,8 @@ class DataProvider with ChangeNotifier {
           final DateTime lastFetchTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
           final DateTime now = DateTime.now();
 
-          // Cache is valid for 7 days for schedule
-          if (now.difference(lastFetchTime).inDays < 7) {
+          // Cache is valid for 30 days for schedule
+          if (now.difference(lastFetchTime).inDays < 30) {
             final List<dynamic> decoded = jsonDecode(cachedData);
             _schedule = decoded.map((e) => ScheduleItem.fromJson(e)).toList();
             _scheduleLoaded = true;
@@ -196,6 +198,7 @@ class DataProvider with ChangeNotifier {
 
   Future<void> loadProgress({bool forceRefresh = false}) async {
     if (_progressLoaded && !forceRefresh) return;
+    if (_progressLoading) return;
     if (_username.isEmpty) return;
 
     _progressLoading = true;
@@ -213,8 +216,8 @@ class DataProvider with ChangeNotifier {
           final DateTime lastFetchTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
           final DateTime now = DateTime.now();
 
-          // Cache is valid for 1 day
-          if (now.difference(lastFetchTime).inDays < 1) {
+          // Cache is valid for 30 days
+          if (now.difference(lastFetchTime).inDays < 30) {
             final Map<String, dynamic> decoded = jsonDecode(cachedData);
             _progressGroups = (decoded['groups'] as List).map((e) => ProgressGroup.fromJson(e)).toList();
             _progressInfo = (decoded['info'] as List).map((e) => ProgressInfo.fromJson(e)).toList();
@@ -229,22 +232,10 @@ class DataProvider with ChangeNotifier {
       var data = await _progressService.getProgressData();
       _progressGroups = data['groups'] ?? [];
       _progressInfo = data['info'] ?? [];
-
-      // Pre-load all group courses
-      if (_progressGroups.isNotEmpty) {
-        await Future.wait(_progressGroups.map((group) async {
-          try {
-            group.courses = await _progressService.getGroupCourses(group.id);
-          } catch (e) {
-            debugPrint("Error pre-loading courses for group ${group.id}: $e");
-          }
-        }));
-      }
-
       _progressLoaded = true;
 
-      // Save to cache
-      await _saveProgressToCache(_progressGroups, _progressInfo);
+      // Start background loading of details without awaiting
+      _loadDetailsInBackground();
     } catch (e) {
       debugPrint("Error loading progress: $e");
       // Try to load stale cache
@@ -264,6 +255,28 @@ class DataProvider with ChangeNotifier {
       _progressLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadDetailsInBackground() async {
+    if (_progressGroups.isEmpty) return;
+
+    // Load details for each group
+    var futures = _progressGroups.map((group) async {
+      try {
+        // Only load if not already loaded (though usually it's null here)
+        if (group.courses == null) {
+          group.courses = await _progressService.getGroupCourses(group.id);
+          notifyListeners(); // Update UI as data comes in
+        }
+      } catch (e) {
+        debugPrint("Error loading courses for group ${group.id}: $e");
+      }
+    });
+
+    await Future.wait(futures);
+
+    // Save to cache after all details are loaded
+    await _saveProgressToCache(_progressGroups, _progressInfo);
   }
 
   Future<void> _saveProgressToCache(List<ProgressGroup> groups, List<ProgressInfo> info) async {
@@ -295,6 +308,16 @@ class DataProvider with ChangeNotifier {
       group.courses = []; // Stop loading spinner even on error
       notifyListeners();
     }
+  }
+  
+  Future<void> clearCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_gradesCacheKey);
+    await prefs.remove(_gradesCacheTimeKey);
+    await prefs.remove(_scheduleCacheKey);
+    await prefs.remove(_scheduleCacheTimeKey);
+    await prefs.remove(_progressCacheKey);
+    await prefs.remove(_progressCacheTimeKey);
   }
   
   void clearAll() {

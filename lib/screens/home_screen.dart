@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_provider.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 1;
   final List<Widget> _pages = [
     const GradesScreen(),
     const ScheduleScreen(),
@@ -62,7 +63,15 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            const Text("v1.0.0", style: TextStyle(color: Colors.grey)),
+            FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Text("v${snapshot.data!.version}", style: const TextStyle(color: Colors.grey));
+                }
+                return const Text("v...", style: TextStyle(color: Colors.grey));
+              },
+            ),
             const SizedBox(height: 24),
             InkWell(
               onTap: () => launchUrl(Uri.parse("https://github.com/Sdpei-CTCA/JWHelper")),

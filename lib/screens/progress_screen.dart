@@ -12,6 +12,8 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
+  final Map<String, bool> _showAllMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -187,8 +189,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         padding: EdgeInsets.all(16.0),
                         child: Text("该类别下暂无课程", style: TextStyle(color: Colors.grey)),
                       )
-                    else
-                      ...group.courses!.map((course) => Container(
+                    else ...[
+                      ...group.courses!.take(_showAllMap[group.id] == true ? group.courses!.length : 20).map((course) => Container(
                         decoration: BoxDecoration(
                           border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
                         ),
@@ -222,6 +224,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           ],
                         ),
                       )),
+                      if (group.courses!.length > 20 && _showAllMap[group.id] != true)
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                          ),
+                          width: double.infinity,
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _showAllMap[group.id] = true;
+                              });
+                            },
+                            child: Text("查看剩余 ${group.courses!.length - 20} 门课程"),
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ),

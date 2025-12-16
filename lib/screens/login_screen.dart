@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
+import '../providers/data_provider.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -194,7 +195,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               SnackBar(content: Text(error), backgroundColor: Colors.red),
                             );
                           } else if (auth.isLoggedIn && mounted) {
-                            if (auth.isOfflineMode) {
+                            final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                            
+                            if (!auth.isOfflineMode) {
+                              // Clear cache on manual login to force refresh
+                              await dataProvider.clearCache();
+                              
+                              // Start loading all data in parallel
+                              dataProvider.loadGrades(forceRefresh: true);
+                              dataProvider.loadSchedule(forceRefresh: true);
+                              dataProvider.loadProgress(forceRefresh: true);
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text("网络连接失败，已进入离线模式"), 
@@ -202,7 +213,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   duration: Duration(seconds: 3),
                                 ),
                               );
+                              // Load from cache if available
+                              dataProvider.loadGrades();
+                              dataProvider.loadSchedule();
+                              dataProvider.loadProgress();
                             }
+
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(builder: (_) => const HomeScreen()),
                             );
