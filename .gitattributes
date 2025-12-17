@@ -1,0 +1,8 @@
+# 忽略前端资源文件
+*.html linguist-vendored
+*.css linguist-vendored
+*.js linguist-vendored
+
+# 忽略配置文件
+*. xml linguist-generated
+*.json linguist-vendored
