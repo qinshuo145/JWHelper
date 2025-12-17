@@ -40,8 +40,12 @@ class AuthService {
 
       if (result.contains("true")) {
         return {"success": true, "message": "登录成功"};
-      } else if (result.contains("verifyCodeTimeOut") || result.contains("wrongVerifyCode") || result.contains("showVC")) {
-        return {"success": false, "needCaptcha": true, "message": "需要验证码"};
+      } else if (result.contains("wrongVerifyCode")) {
+        return {"success": false, "needCaptcha": true, "message": "验证码错误"};
+      } else if (result.contains("verifyCodeTimeOut")) {
+        return {"success": false, "needCaptcha": true, "message": "验证码已过期"};
+      } else if (result.contains("showVC")) {
+        return {"success": false, "needCaptcha": true, "message": "密码错误"};
       } else {
         return {"success": false, "message": "登录失败: $result"};
       }

@@ -7,6 +7,7 @@ import '../providers/data_provider.dart';
 import 'grades_screen.dart';
 import 'schedule_screen.dart';
 import 'progress_screen.dart';
+import 'exam_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,10 +18,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1;
+  int _currentIndex = 0;
   final List<Widget> _pages = [
-    const GradesScreen(),
     const ScheduleScreen(),
+    const ExamScreen(),
+    const GradesScreen(),
     const ProgressScreen(),
   ];
 
@@ -142,17 +144,23 @@ class _HomeScreenState extends State<HomeScreen> {
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
         backgroundColor: Colors.white,
         elevation: 2,
-        destinations: const [
+        destinations: const [ 
+          NavigationDestination(
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_today),
+            label: '课表',
+          ),          
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: '考试',
+          ),
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
             label: '成绩',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today),
-            label: '课表',
-          ),
+
           NavigationDestination(
             icon: Icon(Icons.school_outlined),
             selectedIcon: Icon(Icons.school),

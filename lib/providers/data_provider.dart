@@ -4,14 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/grades_service.dart';
 import '../api/schedule_service.dart';
 import '../api/progress_service.dart';
+import '../api/exam_service.dart';
 import '../models/grade.dart';
 import '../models/schedule_item.dart';
 import '../models/progress_item.dart';
+import '../models/exam.dart';
 
 class DataProvider with ChangeNotifier {
   final GradesService _gradesService = GradesService();
   final ScheduleService _scheduleService = ScheduleService();
   final ProgressService _progressService = ProgressService();
+  final ExamService _examService = ExamService();
 
   // Grades
   List<Grade> _grades = [];
@@ -38,6 +41,18 @@ class DataProvider with ChangeNotifier {
   List<ProgressInfo> get progressInfo => _progressInfo;
   bool get progressLoading => _progressLoading;
   bool get progressLoaded => _progressLoaded;
+
+  // Exams
+  List<Semester> _examSemesters = [];
+  List<ExamRound> _examRounds = [];
+  List<Exam> _exams = [];
+  bool _examsLoading = false;
+  bool _examsLoaded = false;
+  List<Semester> get examSemesters => _examSemesters;
+  List<ExamRound> get examRounds => _examRounds;
+  List<Exam> get exams => _exams;
+  bool get examsLoading => _examsLoading;
+  bool get examsLoaded => _examsLoaded;
 
   String _username = '';
 
@@ -309,6 +324,134 @@ class DataProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // --- Exam Methods ---
+  String get _examSemestersCacheKey => 'exam_semesters_$_username';
+  String _examRoundsCacheKey(String semId) => 'exam_rounds_${semId}_$_username';
+  String _examsCacheKey(String semId, String roundId) => 'exams_${semId}_${roundId}_$_username';
+
+  Future<void> loadExamSemesters({bool forceRefresh = false}) async {
+    if (_examSemesters.isNotEmpty && !forceRefresh) return;
+    if (_username.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!forceRefresh) {
+        final String? cachedData = prefs.getString(_examSemestersCacheKey);
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _examSemesters = decoded.map((e) => Semester.fromJson(e)).toList();
+          notifyListeners();
+          return;
+        }
+      }
+
+      _examSemesters = await _examService.getSemesters();
+      
+      // Save to cache
+      final String encoded = jsonEncode(_examSemesters.map((e) => e.toJson()).toList());
+      await prefs.setString(_examSemestersCacheKey, encoded);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error loading exam semesters: $e");
+      // Try stale cache
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final String? cachedData = prefs.getString(_examSemestersCacheKey);
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _examSemesters = decoded.map((e) => Semester.fromJson(e)).toList();
+          notifyListeners();
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> loadExamRounds(String semId, {bool forceRefresh = false}) async {
+    if (_username.isEmpty) return;
+    
+    // We don't check if _examRounds is not empty because it depends on semId
+    // But we could check if the current _examRounds matches the cache for this semId?
+    // For simplicity, we just load.
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _examRoundsCacheKey(semId);
+
+      if (!forceRefresh) {
+        final String? cachedData = prefs.getString(key);
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _examRounds = decoded.map((e) => ExamRound.fromJson(e)).toList();
+          notifyListeners();
+          return;
+        }
+      }
+
+      _examRounds = await _examService.getExamRounds(semId);
+      
+      // Save to cache
+      final String encoded = jsonEncode(_examRounds.map((e) => e.toJson()).toList());
+      await prefs.setString(key, encoded);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error loading exam rounds: $e");
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final String? cachedData = prefs.getString(_examRoundsCacheKey(semId));
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _examRounds = decoded.map((e) => ExamRound.fromJson(e)).toList();
+          notifyListeners();
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> loadExams(String semId, String roundId, {bool forceRefresh = false}) async {
+    if (_username.isEmpty) return;
+    
+    _examsLoading = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _examsCacheKey(semId, roundId);
+
+      if (!forceRefresh) {
+        final String? cachedData = prefs.getString(key);
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _exams = decoded.map((e) => Exam.fromJson(e)).toList();
+          _examsLoaded = true;
+          _examsLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+
+      _exams = await _examService.getExamList(semId, roundId);
+      _examsLoaded = true;
+      
+      // Save to cache
+      final String encoded = jsonEncode(_exams.map((e) => e.toJson()).toList());
+      await prefs.setString(key, encoded);
+    } catch (e) {
+      debugPrint("Error loading exams: $e");
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final String? cachedData = prefs.getString(_examsCacheKey(semId, roundId));
+        if (cachedData != null) {
+          final List<dynamic> decoded = jsonDecode(cachedData);
+          _exams = decoded.map((e) => Exam.fromJson(e)).toList();
+          _examsLoaded = true;
+        }
+      } catch (_) {}
+    } finally {
+      _examsLoading = false;
+      notifyListeners();
+    }
+  }
   
   Future<void> clearCache() async {
     final prefs = await SharedPreferences.getInstance();
@@ -318,6 +461,17 @@ class DataProvider with ChangeNotifier {
     await prefs.remove(_scheduleCacheTimeKey);
     await prefs.remove(_progressCacheKey);
     await prefs.remove(_progressCacheTimeKey);
+    
+    // Clear exam caches - this is harder because keys are dynamic
+    // We can iterate all keys and remove those starting with exam_
+    final keys = prefs.getKeys();
+    for (String key in keys) {
+      if (key.startsWith('exam_') || key.startsWith('exams_')) {
+        if (key.contains(_username)) {
+          await prefs.remove(key);
+        }
+      }
+    }
   }
   
   void clearAll() {
@@ -328,6 +482,10 @@ class DataProvider with ChangeNotifier {
     _progressGroups = [];
     _progressInfo = [];
     _progressLoaded = false;
+    _examSemesters = [];
+    _examRounds = [];
+    _exams = [];
+    _examsLoaded = false;
     notifyListeners();
   }
 }
