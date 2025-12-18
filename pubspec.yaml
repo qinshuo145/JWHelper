@@ -22,6 +22,7 @@ dependencies:
   flutter_animate: ^4.2.0+1
   url_launcher: ^6.3.2
   package_info_plus: ^9.0.0
+  device_info_plus: ^10.1.2
 
 dev_dependencies:
   flutter_test:

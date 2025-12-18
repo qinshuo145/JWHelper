@@ -194,16 +194,6 @@ class _ExamScreenState extends State<ExamScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<DataProvider>(context);
-    final semesters = provider.examSemesters;
-    
-    final rounds = _getSortedRounds(provider.examRounds);
-
-    final isLoading = (provider.examsLoading && !_refreshingFilters) || _initLoading;
-
-    final effectiveSelectedSemester = semesters.contains(_selectedSemester) ? _selectedSemester : null;
-    final effectiveSelectedRound = rounds.contains(_selectedRound) ? _selectedRound : null;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -212,31 +202,43 @@ class _ExamScreenState extends State<ExamScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          DropdownButton<String>(
-            value: _selectedCampus,
-            underline: const SizedBox(),
-            icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF409EFF)),
-            style: const TextStyle(color: Color(0xFF409EFF), fontWeight: FontWeight.bold),
-            items: const [
-              DropdownMenuItem(value: "济南", child: Text("济南校区")),
-              DropdownMenuItem(value: "日照", child: Text("日照校区")),
-            ],
-            onChanged: (value) {
-              if (value != null && value != _selectedCampus) {
-                setState(() {
-                  _selectedCampus = value;
-                  _saveCampus(value);
-                  // Re-sort and auto-select when campus changes
-                  if (provider.examRounds.isNotEmpty) {
-                    _autoSelectRound(provider.examRounds);
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECF5FF),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFD9ECFF)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedCampus,
+                isDense: true,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF409EFF), size: 18),
+                style: const TextStyle(color: Color(0xFF409EFF), fontWeight: FontWeight.bold, fontSize: 14),
+                borderRadius: BorderRadius.circular(12),
+                items: const [
+                  DropdownMenuItem(value: "济南", child: Text("济南校区")),
+                  DropdownMenuItem(value: "日照", child: Text("日照校区")),
+                ],
+                onChanged: (value) {
+                  if (value != null && value != _selectedCampus) {
+                    setState(() {
+                      _selectedCampus = value;
+                      _saveCampus(value);
+                      // Re-sort and auto-select when campus changes
+                      final provider = Provider.of<DataProvider>(context, listen: false);
+                      if (provider.examRounds.isNotEmpty) {
+                        _autoSelectRound(provider.examRounds);
+                      }
+                    });
+                    // Reload exams for the new selection
+                    _loadExams();
                   }
-                });
-                // Reload exams for the new selection
-                _loadExams();
-              }
-            },
+                },
+              ),
+            ),
           ),
-          const SizedBox(width: 16),
         ],
       ),
       body: Column(
@@ -248,58 +250,108 @@ class _ExamScreenState extends State<ExamScreen> {
             child: Column(
               children: [
                 // Semester Dropdown
-                DropdownButtonFormField<Semester>(
-                  initialValue: effectiveSelectedSemester,
-                  menuMaxHeight: 300,
-                  hint: const Text("请选择学期"),
-                  decoration: const InputDecoration(
-                    labelText: "学期",
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: (semesters.isEmpty || _initLoading || _refreshingFilters) ? null : semesters.map((s) {
-                    return DropdownMenuItem(
-                      value: s,
-                      child: Text(s.name, overflow: TextOverflow.ellipsis),
+                Selector<DataProvider, List<Semester>>(
+                  selector: (_, p) => p.examSemesters,
+                  builder: (context, semesters, _) {
+                    final effectiveSelectedSemester = semesters.contains(_selectedSemester) ? _selectedSemester : null;
+                    return DropdownButtonFormField<Semester>(
+                      initialValue: effectiveSelectedSemester,
+                      menuMaxHeight: 300,
+                      hint: const Text("请选择学期"),
+                      decoration: InputDecoration(
+                        labelText: "学期",
+                        prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20, color: Color(0xFF409EFF)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                          borderSide: BorderSide(color: Color(0xFF409EFF), width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Color(0xFF409EFF)),
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      style: const TextStyle(color: Colors.black87, fontSize: 15),
+                      items: (semesters.isEmpty || _initLoading || _refreshingFilters) ? null : semesters.map((s) {
+                        return DropdownMenuItem(
+                          value: s,
+                          child: Text(s.name, overflow: TextOverflow.ellipsis),
+                        );
+                      }).toList(),
+                      onChanged: (semesters.isEmpty || _initLoading || _refreshingFilters) ? null : (value) {
+                        if (value != null && value != _selectedSemester) {
+                          setState(() => _selectedSemester = value);
+                          _loadRounds();
+                        }
+                      },
+                      disabledHint: (_initLoading || _refreshingFilters) ? const Text("正在加载学期...") : const Text("暂无学期数据"),
                     );
-                  }).toList(),
-                  onChanged: (semesters.isEmpty || _initLoading || _refreshingFilters) ? null : (value) {
-                    if (value != null && value != _selectedSemester) {
-                      setState(() => _selectedSemester = value);
-                      _loadRounds();
-                    }
-                  },
-                  disabledHint: (_initLoading || _refreshingFilters) ? const Text("正在加载学期...") : const Text("暂无学期数据"),
+                  }
                 ),
                 
                 const SizedBox(height: 12),
                 
                 // Round Dropdown
-                DropdownButtonFormField<ExamRound>(
-                  key: ValueKey("rounds_$_selectedCampus"),
-                  initialValue: effectiveSelectedRound,
-                  menuMaxHeight: 300,
-                  hint: const Text("请选择考试批次"),
-                  decoration: const InputDecoration(
-                    labelText: "考试批次",
-                    border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: (rounds.isEmpty || _roundsLoading || _refreshingFilters) ? null : rounds.map((r) {
-                    return DropdownMenuItem(
-                      value: r,
-                      child: Text(r.name),
+                Selector<DataProvider, List<ExamRound>>(
+                  selector: (_, p) => p.examRounds,
+                  builder: (context, roundsRaw, _) {
+                    final rounds = _getSortedRounds(roundsRaw);
+                    final effectiveSelectedRound = rounds.contains(_selectedRound) ? _selectedRound : null;
+                    
+                    return DropdownButtonFormField<ExamRound>(
+                      key: ValueKey("rounds_$_selectedCampus"),
+                      initialValue: effectiveSelectedRound,
+                      menuMaxHeight: 300,
+                      hint: const Text("请选择考试批次"),
+                      decoration: InputDecoration(
+                        labelText: "考试批次",
+                        prefixIcon: const Icon(Icons.layers_outlined, size: 20, color: Color(0xFF409EFF)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                          borderSide: BorderSide(color: Color(0xFF409EFF), width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Color(0xFF409EFF)),
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      style: const TextStyle(color: Colors.black87, fontSize: 15),
+                      items: (rounds.isEmpty || _roundsLoading || _refreshingFilters) ? null : rounds.map((r) {
+                        return DropdownMenuItem(
+                          value: r,
+                          child: Text(r.name),
+                        );
+                      }).toList(),
+                      onChanged: (rounds.isEmpty || _roundsLoading || _refreshingFilters) ? null : (value) {
+                        if (value != null && value != _selectedRound) {
+                          setState(() => _selectedRound = value);
+                          _loadExams();
+                        }
+                      },
+                      disabledHint: _selectedSemester == null 
+                          ? const Text("请先选择学期") 
+                          : ((_roundsLoading || _refreshingFilters) ? const Text("正在加载批次...") : const Text("暂无考试批次")),
                     );
-                  }).toList(),
-                  onChanged: (rounds.isEmpty || _roundsLoading || _refreshingFilters) ? null : (value) {
-                    if (value != null && value != _selectedRound) {
-                      setState(() => _selectedRound = value);
-                      _loadExams();
-                    }
-                  },
-                  disabledHint: _selectedSemester == null 
-                      ? const Text("请先选择学期") 
-                      : ((_roundsLoading || _refreshingFilters) ? const Text("正在加载批次...") : const Text("暂无考试批次")),
+                  }
                 ),
               ],
             ),
@@ -309,7 +361,12 @@ class _ExamScreenState extends State<ExamScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _handleRefresh,
-              child: _buildContent(provider, isLoading),
+              child: Consumer<DataProvider>(
+                builder: (context, provider, _) {
+                  final isLoading = (provider.examsLoading && !_refreshingFilters) || _initLoading;
+                  return _buildContent(provider, isLoading);
+                }
+              ),
             ),
           ),
         ],

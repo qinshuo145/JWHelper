@@ -21,14 +21,18 @@ class ApiClient {
       baseUrl: Config.baseUrl,
       headers: {
         "User-Agent": Config.userAgent,
-        "Referer": "${Config.baseUrl}/Login.aspx",
+        if (!kIsWeb) "Referer": "${Config.baseUrl}/Login.aspx",
       },
       responseType: ResponseType.plain, // We handle HTML parsing manually
       validateStatus: (status) => status! < 500,
     ));
   }
 
+  bool _initialized = false;
+
   Future<void> init() async {
+    if (_initialized) return;
+
     // Default to in-memory cookies
     cookieJar = CookieJar();
 
@@ -42,9 +46,17 @@ class ApiClient {
         // Ignore errors (like MissingPluginException) and keep using in-memory cookies
         debugPrint("Cookie persistence initialization failed: $e");
       }
+      
+      // Only add CookieManager on non-web platforms
+      // On Web, browsers handle cookies automatically (and CookieManager can cause issues)
+      dio.interceptors.add(CookieManager(cookieJar));
+    } else {
+      // On Web, we might need to enable withCredentials for CORS if needed
+      // But we can't easily access BrowserHttpClientAdapter here without conditional imports.
+      // Assuming the browser/proxy handles it or the user is running in a same-origin environment.
     }
     
-    dio.interceptors.add(CookieManager(cookieJar));
+    _initialized = true;
   }
 
   Future<void> clearCookies() async {

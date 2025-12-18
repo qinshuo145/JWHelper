@@ -1,10 +1,22 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html_parser;
 import '../config.dart';
 import 'client.dart';
 import '../models/exam.dart';
 import 'package:flutter/rendering.dart';
+
+// Top-level function for compute
+List<Semester> _parseExamSemesters(String html) {
+  final document = html_parser.parse(html);
+  final options = document.querySelectorAll("#ddlSemester option");
+  
+  return options.map((e) => Semester(
+    id: e.attributes['value'] ?? "",
+    name: e.text.trim(),
+  )).toList();
+}
 
 class ExamService {
   final ApiClient _client = ApiClient();
@@ -15,13 +27,7 @@ class ExamService {
         "${Config.baseUrl}/Student/StudentExamArrangeTable.aspx",
       );
       
-      final document = html_parser.parse(response.data);
-      final options = document.querySelectorAll("#ddlSemester option");
-      
-      return options.map((e) => Semester(
-        id: e.attributes['value'] ?? "",
-        name: e.text.trim(),
-      )).toList();
+      return await compute(_parseExamSemesters, response.data.toString());
     } catch (e) {
       debugPrint("Error fetching semesters: $e");
       rethrow;

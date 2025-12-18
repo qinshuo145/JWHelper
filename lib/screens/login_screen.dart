@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/auth_provider.dart';
@@ -185,48 +186,65 @@ class _LoginScreenState extends State<LoginScreen> {
                             return;
                           }
 
-                          final error = await auth.login(
-                            username,
-                            password,
-                            verifyCode: _captchaController.text,
-                          );
-
-                          if (!context.mounted) return;
-
-                          if (error != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(error), backgroundColor: Colors.red),
+                          try {
+                            final error = await auth.login(
+                              username,
+                              password,
+                              verifyCode: _captchaController.text,
                             );
-                          } else if (auth.isLoggedIn) {
-                            final dataProvider = Provider.of<DataProvider>(context, listen: false);
-                            
-                            if (!auth.isOfflineMode) {
-                              // Clear cache on manual login to force refresh
-                              await dataProvider.clearCache();
-                              
-                              if (!context.mounted) return;
 
-                              // Start loading all data in parallel
-                              dataProvider.loadGrades(forceRefresh: true);
-                              dataProvider.loadSchedule(forceRefresh: true);
-                              dataProvider.loadProgress(forceRefresh: true);
-                            } else {
+                            if (!context.mounted) return;
+
+                            if (error != null) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("网络连接失败，已进入离线模式"), 
-                                  backgroundColor: Colors.orange,
-                                  duration: Duration(seconds: 3),
+                                SnackBar(content: Text(error), backgroundColor: Colors.red),
+                              );
+                            } else if (auth.isLoggedIn) {
+                              final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                              
+                              if (!auth.isOfflineMode) {
+                                // Clear cache on manual login to force refresh
+                                await dataProvider.clearCache();
+                                
+                                if (!context.mounted) return;
+
+                                // Start loading all data in parallel
+                                dataProvider.loadGrades(forceRefresh: true);
+                                dataProvider.loadSchedule(forceRefresh: true);
+                                dataProvider.loadProgress(forceRefresh: true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("网络连接失败，已进入离线模式"), 
+                                    backgroundColor: Colors.orange,
+                                    duration: Duration(seconds: 3),
+                                  ),
+                                );
+                                // Load from cache if available
+                                dataProvider.loadGrades();
+                                dataProvider.loadSchedule();
+                                dataProvider.loadProgress();
+                              }
+
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const HomeScreen()),
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Login error: $e");
+                            if (context.mounted) {
+                              String errorMsg = "发生未知错误: $e";
+                              if (kIsWeb && e.toString().contains("XMLHttpRequest")) {
+                                errorMsg = "Web端存在跨域限制，无法直接访问教务系统。\n请使用 Windows 或 Android 客户端运行。";
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(errorMsg), 
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 5),
                                 ),
                               );
-                              // Load from cache if available
-                              dataProvider.loadGrades();
-                              dataProvider.loadSchedule();
-                              dataProvider.loadProgress();
                             }
-
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const HomeScreen()),
-                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(

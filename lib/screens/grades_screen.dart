@@ -80,21 +80,33 @@ class _GradesScreenState extends State<GradesScreen> {
               const Text("学期筛选: ", style: TextStyle(fontSize: 16)),
               const SizedBox(width: 16),
               Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedSemester,
-                    items: allOptions.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedSemester = newValue;
-                      });
-                    },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF409EFF)),
+                      style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w500),
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      value: _selectedSemester,
+                      items: allOptions.map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedSemester = newValue;
+                        });
+                      },
+                    ),
                   ),
                 ),
               ),
