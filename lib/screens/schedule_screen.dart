@@ -143,7 +143,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

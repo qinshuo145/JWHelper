@@ -30,7 +30,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     Widget buildCourseItem(ProgressCourse course) {
       return Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+          border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -175,7 +175,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
               ),
               child: Theme(
                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -244,7 +244,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           
                         Container(
                           decoration: BoxDecoration(
-                            border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                            border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
                           ),
                           width: double.infinity,
                           child: TextButton(

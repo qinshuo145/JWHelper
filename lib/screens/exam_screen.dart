@@ -196,13 +196,11 @@ class _ExamScreenState extends State<ExamScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<DataProvider>(context);
     final semesters = provider.examSemesters;
-    // Use sorted rounds for display
+    
     final rounds = _getSortedRounds(provider.examRounds);
-    final exams = provider.exams;
-    // Don't show full screen loading when refreshing via pull-to-refresh
+
     final isLoading = (provider.examsLoading && !_refreshingFilters) || _initLoading;
 
-    // Defensive check to prevent DropdownButton crash
     final effectiveSelectedSemester = semesters.contains(_selectedSemester) ? _selectedSemester : null;
     final effectiveSelectedRound = rounds.contains(_selectedRound) ? _selectedRound : null;
 
@@ -251,7 +249,7 @@ class _ExamScreenState extends State<ExamScreen> {
               children: [
                 // Semester Dropdown
                 DropdownButtonFormField<Semester>(
-                  value: effectiveSelectedSemester,
+                  initialValue: effectiveSelectedSemester,
                   menuMaxHeight: 300,
                   hint: const Text("请选择学期"),
                   decoration: const InputDecoration(
@@ -279,7 +277,7 @@ class _ExamScreenState extends State<ExamScreen> {
                 // Round Dropdown
                 DropdownButtonFormField<ExamRound>(
                   key: ValueKey("rounds_$_selectedCampus"),
-                  value: effectiveSelectedRound,
+                  initialValue: effectiveSelectedRound,
                   menuMaxHeight: 300,
                   hint: const Text("请选择考试批次"),
                   decoration: const InputDecoration(

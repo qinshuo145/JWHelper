@@ -4,6 +4,7 @@ import 'package:html/parser.dart' as html_parser;
 import '../config.dart';
 import 'client.dart';
 import '../models/exam.dart';
+import 'package:flutter/rendering.dart';
 
 class ExamService {
   final ApiClient _client = ApiClient();
@@ -11,7 +12,7 @@ class ExamService {
   Future<List<Semester>> getSemesters() async {
     try {
       final response = await _client.dio.get(
-        "${Config.BASE_URL}/Student/StudentExamArrangeTable.aspx",
+        "${Config.baseUrl}/Student/StudentExamArrangeTable.aspx",
       );
       
       final document = html_parser.parse(response.data);
@@ -22,15 +23,15 @@ class ExamService {
         name: e.text.trim(),
       )).toList();
     } catch (e) {
-      print("Error fetching semesters: $e");
-      return [];
+      debugPrint("Error fetching semesters: $e");
+      rethrow;
     }
   }
 
   Future<List<ExamRound>> getExamRounds(String semId) async {
     try {
       final response = await _client.dio.post(
-        "${Config.BASE_URL}/Student/StudentExamArrangeTableHandler.ashx",
+        "${Config.baseUrl}/Student/StudentExamArrangeTableHandler.ashx",
         queryParameters: {
           "action": "thirdchange",
           "rondom": DateTime.now().millisecondsSinceEpoch / 1000,
@@ -59,15 +60,15 @@ class ExamService {
       return [];
 
     } catch (e) {
-      print("Error fetching exam rounds: $e");
-      return [];
+      debugPrint("Error fetching exam rounds: $e");
+      rethrow;
     }
   }
 
   Future<List<Exam>> getExamList(String semId, String etId) async {
     try {
       final response = await _client.dio.post(
-        "${Config.BASE_URL}/Student/StudentExamArrangeTableHandler.ashx",
+        "${Config.baseUrl}/Student/StudentExamArrangeTableHandler.ashx",
         data: {
           "semId": semId,
           "etID": etId,
@@ -106,8 +107,8 @@ class ExamService {
       }).toList();
 
     } catch (e) {
-      print("Error fetching exam list: $e");
-      return [];
+      debugPrint("Error fetching exam list: $e");
+      rethrow;
     }
   }
 }

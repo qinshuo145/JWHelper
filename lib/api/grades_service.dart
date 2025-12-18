@@ -11,7 +11,7 @@ class GradesService {
 
   Future<List<String>> getSemesters() async {
     try {
-      var response = await _client.dio.get(Config.GRADES_URL);
+      var response = await _client.dio.get(Config.gradesUrl);
       _cachedSoup = parser.parse(response.data);
       
       var semesterDivs = _cachedSoup!.querySelectorAll('div.div_semestertitle');

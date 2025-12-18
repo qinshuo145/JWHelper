@@ -125,7 +125,7 @@ class _GradesScreenState extends State<GradesScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+                          side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -145,7 +145,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: double.tryParse(grade.score) != null && double.parse(grade.score) < 60 
-                                          ? Colors.red.withOpacity(0.1) 
+                                          ? Colors.red.withValues(alpha: 0.1) 
                                           : const Color(0xFFECF5FF),
                                       borderRadius: BorderRadius.circular(4),
                                     ),

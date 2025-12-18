@@ -13,7 +13,7 @@ class ScheduleService {
   Future<List<ScheduleItem>> getSchedule() async {
     try {
       // 1. Get Semester ID
-      var pageResp = await _client.dio.get("${Config.BASE_URL}/Student/CourseTimetable/MyCourseTimeTable.aspx");
+      var pageResp = await _client.dio.get("${Config.baseUrl}/Student/CourseTimetable/MyCourseTimeTable.aspx");
       var doc = parser.parse(pageResp.data);
       var semId = "";
       var select = doc.querySelector('select#ddlSemester');
@@ -33,7 +33,7 @@ class ScheduleService {
         "isPublic": ""
       });
 
-      var apiResp = await _client.dio.post(Config.TIMETABLE_API, data: formData);
+      var apiResp = await _client.dio.post(Config.timetableAPI, data: formData);
       var json = jsonDecode(apiResp.data);
       var data = json['Data'] as List?;
       
@@ -48,12 +48,12 @@ class ScheduleService {
         int dayIdx = -1;
         if (course['OnMonday'] == true) {
           dayIdx = 0;
-        } else if (course['OnTuesday'] == true) dayIdx = 1;
-        else if (course['OnWednesday'] == true) dayIdx = 2;
-        else if (course['OnThursday'] == true) dayIdx = 3;
-        else if (course['OnFriday'] == true) dayIdx = 4;
-        else if (course['OnSaturday'] == true) dayIdx = 5;
-        else if (course['OnSunday'] == true) dayIdx = 6;
+        } else if (course['OnTuesday'] == true) {dayIdx = 1;}
+        else if (course['OnWednesday'] == true) {dayIdx = 2;}
+        else if (course['OnThursday'] == true) {dayIdx = 3;}
+        else if (course['OnFriday'] == true) {dayIdx = 4;}
+        else if (course['OnSaturday'] == true) {dayIdx = 5;}
+        else if (course['OnSunday'] == true) {dayIdx = 6;}
 
         if (dayIdx != -1) {
           String classroom = course['Classroom'] ?? "";

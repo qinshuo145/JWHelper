@@ -11,7 +11,7 @@ class AuthService {
 
   Future<Uint8List?> getCaptchaImage() async {
     try {
-      String url = "${Config.BASE_URL}/LoginHandler.ashx?createvc=true&random=${DateTime.now().millisecondsSinceEpoch}";
+      String url = "${Config.baseUrl}/LoginHandler.ashx?createvc=true&random=${DateTime.now().millisecondsSinceEpoch}";
       Response response = await _client.dio.get(
         url,
         options: Options(responseType: ResponseType.bytes),
@@ -35,7 +35,7 @@ class AuthService {
     });
 
     try {
-      Response response = await _client.dio.post(Config.LOGIN_URL, data: formData);
+      Response response = await _client.dio.post(Config.loginUrl, data: formData);
       String result = response.data.toString();
 
       if (result.contains("true")) {

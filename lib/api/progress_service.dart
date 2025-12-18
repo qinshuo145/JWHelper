@@ -13,7 +13,7 @@ class ProgressService {
 
   Future<Map<String, dynamic>> getProgressData() async {
     try {
-      var response = await _client.dio.get(Config.PROGRESS_URL);
+      var response = await _client.dio.get(Config.progressUrl);
       
       
       var doc = parser.parse(response.data);
@@ -308,7 +308,7 @@ class ProgressService {
     // systemNumber can be empty, so we don't check for isEmpty
     
     try {
-      String url = "${Config.BASE_URL}/Student/MyProgramProgressHandler.ashx?action=GetData&random=${DateTime.now().millisecondsSinceEpoch}";
+      String url = "${Config.baseUrl}/Student/MyProgramProgressHandler.ashx?action=GetData&random=${DateTime.now().millisecondsSinceEpoch}";
       
       var formData = {
         "groupId": groupId,
@@ -322,7 +322,7 @@ class ProgressService {
           contentType: Headers.formUrlEncodedContentType,
           headers: {
             "X-Requested-With": "XMLHttpRequest",
-            "Referer": Config.PROGRESS_URL,
+            "Referer": Config.progressUrl,
           },
         ),
       );

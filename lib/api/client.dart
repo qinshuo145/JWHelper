@@ -18,10 +18,10 @@ class ApiClient {
 
   ApiClient._internal() {
     dio = Dio(BaseOptions(
-      baseUrl: Config.BASE_URL,
+      baseUrl: Config.baseUrl,
       headers: {
-        "User-Agent": Config.USER_AGENT,
-        "Referer": "${Config.BASE_URL}/Login.aspx",
+        "User-Agent": Config.userAgent,
+        "Referer": "${Config.baseUrl}/Login.aspx",
       },
       responseType: ResponseType.plain, // We handle HTML parsing manually
       validateStatus: (status) => status! < 500,
