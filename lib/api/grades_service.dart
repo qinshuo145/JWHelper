@@ -4,7 +4,6 @@ import 'package:html/dom.dart';
 import '../config.dart';
 import 'client.dart';
 import '../models/grade.dart';
-import 'package:flutter/rendering.dart';
 
 // Top-level function for compute
 List<Grade> _parseAllGrades(String html) {

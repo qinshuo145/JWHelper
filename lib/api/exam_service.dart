@@ -5,7 +5,6 @@ import 'package:html/parser.dart' as html_parser;
 import '../config.dart';
 import 'client.dart';
 import '../models/exam.dart';
-import 'package:flutter/rendering.dart';
 
 // Top-level function for compute
 List<Semester> _parseExamSemesters(String html) {

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart';
 import 'package:dio/dio.dart';
