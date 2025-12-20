@@ -19,6 +19,8 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: Config.baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {
         "User-Agent": Config.userAgent,
         if (!kIsWeb) "Referer": "${Config.baseUrl}/Login.aspx",

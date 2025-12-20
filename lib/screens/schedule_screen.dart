@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
+import '../models/schedule_item.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -59,8 +60,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           Expanded(
             child: TabBarView(
               children: List.generate(7, (dayIndex) {
-                var dayItems = items.where((e) => e.dayIndex == dayIndex).toList();
-                dayItems.sort((a, b) => a.startUnit.compareTo(b.startUnit));
+                // Use optimized getter from provider
+                final groupedSchedule = dataProvider.scheduleGroupedByDay;
+                final dayItems = groupedSchedule[dayIndex] ?? [];
                 
                 if (dayItems.isEmpty) {
                   return RefreshIndicator(
@@ -74,29 +76,59 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   );
                 }
 
-                // Group items
-                final morningItems = dayItems.where((e) => e.startPeriod <= 4).toList();
-                final afternoonItems = dayItems.where((e) => e.startPeriod > 4 && e.startPeriod <= 8).toList();
-                final eveningItems = dayItems.where((e) => e.startPeriod > 8).toList();
+                // Group items by start unit to handle overlaps
+                Map<int, List<ScheduleItem>> groupedItems = {};
+                for (var item in dayItems) {
+                  if (!groupedItems.containsKey(item.startUnit)) {
+                    groupedItems[item.startUnit] = [];
+                  }
+                  groupedItems[item.startUnit]!.add(item);
+                }
+
+                // Sort groups by start unit
+                var sortedKeys = groupedItems.keys.toList()..sort();
+                                
+                // Helper to process a group
+                Widget processGroup(int startUnit) {
+                  var group = groupedItems[startUnit]!;
+                  return _CourseGroup(items: group, currentWeek: dataProvider.currentWeek);
+                }
+
+                List<Widget> morningWidgets = [];
+                List<Widget> afternoonWidgets = [];
+                List<Widget> eveningWidgets = [];
+
+                for (var key in sortedKeys) {
+                  var item = groupedItems[key]!.first; // Representative for time check
+                  var widget = processGroup(key);
+                  
+                  if (item.startPeriod <= 4) {
+                    morningWidgets.add(widget);
+                  } else if (item.startPeriod <= 8) {
+                    afternoonWidgets.add(widget);
+                  } else {
+                    eveningWidgets.add(widget);
+                  }
+                }
 
                 return RefreshIndicator(
                   onRefresh: () => dataProvider.loadSchedule(forceRefresh: true),
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      if (morningItems.isNotEmpty) ...[
+                      if (morningWidgets.isNotEmpty) ...[
                         _buildSectionHeader("上午"),
-                        ...morningItems.map((item) => _buildCourseCard(item)),
+                        ...morningWidgets,
                         const SizedBox(height: 16),
                       ],
-                      if (afternoonItems.isNotEmpty) ...[
+                      if (afternoonWidgets.isNotEmpty) ...[
                         _buildSectionHeader("下午"),
-                        ...afternoonItems.map((item) => _buildCourseCard(item)),
+                        ...afternoonWidgets,
                         const SizedBox(height: 16),
                       ],
-                      if (eveningItems.isNotEmpty) ...[
+                      if (eveningWidgets.isNotEmpty) ...[
                         _buildSectionHeader("晚上"),
-                        ...eveningItems.map((item) => _buildCourseCard(item)),
+                        ...eveningWidgets,
                       ],
                     ],
                   ),
@@ -135,15 +167,113 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
     );
   }
+}
 
-  Widget _buildCourseCard(dynamic item) {
+class _CourseGroup extends StatefulWidget {
+  final List<ScheduleItem> items;
+  final int currentWeek;
+
+  const _CourseGroup({required this.items, required this.currentWeek});
+
+  @override
+  State<_CourseGroup> createState() => _CourseGroupState();
+}
+
+class _CourseGroupState extends State<_CourseGroup> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Sort: Current -> Upcoming -> Finished
+    var sortedItems = List<ScheduleItem>.from(widget.items);
+    sortedItems.sort((a, b) {
+      int getScore(ScheduleItem item) {
+        if (widget.currentWeek >= item.weekStart && widget.currentWeek <= item.weekEnd) return 0; // Current
+        if (widget.currentWeek < item.weekStart) return 1; // Upcoming
+        return 2; // Finished
+      }
+      return getScore(a).compareTo(getScore(b));
+    });
+
+    final primaryItem = sortedItems.first;
+    final otherItems = sortedItems.skip(1).toList();
+
+    if (otherItems.isEmpty) {
+      return _buildCourseCard(primaryItem);
+    }
+
+    return Column(
+      children: [
+        Stack(
+          children: [
+            _buildCourseCard(primaryItem),
+            Positioned(
+              right: 8,
+              top: 8,
+              child: InkWell(
+                onTap: () => setState(() => _isExpanded = !_isExpanded),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                       BoxShadow(color: Colors.black12, blurRadius: 2)
+                    ]
+                  ),
+                  child: Icon(
+                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    size: 20,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_isExpanded)
+          ...otherItems.map((item) => Padding(
+            padding: const EdgeInsets.only(left: 16.0), // Indent secondary items
+            child: _buildCourseCard(item, isSecondary: true),
+          )),
+      ],
+    );
+  }
+
+  Widget _buildCourseCard(ScheduleItem item, {bool isSecondary = false}) {
+    bool isCurrent = widget.currentWeek >= item.weekStart && widget.currentWeek <= item.weekEnd;
+    bool isFinished = widget.currentWeek > item.weekEnd;
+    
+    Color bgColor;
+    Color accentColor;
+    Color textColor;
+    
+    if (isCurrent) {
+      bgColor = const Color(0xFFF0F9EB);
+      accentColor = const Color(0xFF67C23A);
+      textColor = Colors.black;
+    } else if (isFinished) {
+      bgColor = Colors.grey[100]!;
+      accentColor = Colors.grey;
+      textColor = Colors.grey;
+    } else {
+      bgColor = Colors.white;
+      accentColor = const Color(0xFF409EFF);
+      textColor = Colors.black;
+    }
+
+    if (isSecondary) {
+       // Secondary items might override bg slightly if not current
+       if (!isCurrent && !isFinished) bgColor = Colors.grey[50]!;
+    }
+
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: bgColor,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+        side: BorderSide(color: isCurrent ? accentColor.withValues(alpha: .3) : Colors.grey.withValues(alpha: .1)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -153,7 +283,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               width: 4,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF409EFF),
+                color: accentColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -164,12 +294,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 children: [
                   Text(
                     item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${item.teacher} @ ${item.classroom}",
-                    style: const TextStyle(color: Colors.grey),
+                    "${item.teacher} #${item.classroom}${item.weekStart > 0 && item.weekEnd > 0 ? ' @${item.weekStart}-${item.weekEnd}周' : ''}",
+                    style: TextStyle(color: isFinished ? Colors.grey : Colors.grey[600]),
                   ),
                 ],
               ),
@@ -177,12 +307,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F9EB),
+                color: isCurrent ? const Color(0xFFF0F9EB) : Colors.grey[100],
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 item.periodString,
-                style: const TextStyle(color: Color(0xFF67C23A), fontWeight: FontWeight.bold),
+                style: TextStyle(color: isCurrent ? const Color(0xFF67C23A) : Colors.grey, fontWeight: FontWeight.bold),
               ),
             ),
           ],

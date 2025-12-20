@@ -29,12 +29,13 @@ class AuthProvider with ChangeNotifier {
   String get currentUsername => _currentUsername;
   bool get isOfflineMode => _isOfflineMode;
 
-  Future<void> init() async {
+  Future<String?> init() async {
     await ApiClient().init();
     await _loadPreferences();
     if (_autoLogin && _savedUsername.isNotEmpty && _savedPassword.isNotEmpty) {
-      await login(_savedUsername, _savedPassword);
+      return await login(_savedUsername, _savedPassword);
     }
+    return null;
   }
 
   Future<void> _loadPreferences() async {
@@ -134,10 +135,13 @@ class AuthProvider with ChangeNotifier {
     _isLoggedIn = false;
     _needCaptcha = false;
     
-    // Cancel auto login but keep saved password
+    // Cancel auto login and clear saved password
     _autoLogin = false;
+    _savedPassword = "";
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('auto_login', false);
+    await prefs.remove('password');
     
     notifyListeners();
   }

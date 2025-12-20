@@ -23,19 +23,107 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      auth.init().then((_) {
+      auth.init().then((error) {
         if (mounted) {
           if (auth.isLoggedIn) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
-          } else if (auth.rememberPassword) {
-            _usernameController.text = auth.savedUsername;
-            _passwordController.text = auth.savedPassword;
+          } else {
+            if (error != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("自动登录失败: $error"), backgroundColor: Colors.orange),
+              );
+            }
+            if (auth.rememberPassword) {
+              _usernameController.text = auth.savedUsername;
+              _passwordController.text = auth.savedPassword;
+            }
           }
         }
       });
     });
+  }
+
+  Future<void> _handleLogin() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("请输入学号和密码"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final error = await auth.login(
+        username,
+        password,
+        verifyCode: _captchaController.text,
+      );
+
+      if (!mounted) return;
+
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+        // If captcha is needed, clear the captcha field
+        if (auth.needCaptcha) {
+          _captchaController.clear();
+        }
+      } else if (auth.isLoggedIn) {
+        final dataProvider = Provider.of<DataProvider>(context, listen: false);
+
+        if (!auth.isOfflineMode) {
+          // Clear cache on manual login to force refresh
+          await dataProvider.clearCache();
+
+          if (!mounted) return;
+
+          // Start loading all data in parallel
+          dataProvider.loadGrades(forceRefresh: true);
+          dataProvider.loadSchedule(forceRefresh: true);
+          dataProvider.loadProgress(forceRefresh: true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("网络连接失败，已进入离线模式"),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          // Load from cache if available
+          dataProvider.loadGrades();
+          dataProvider.loadSchedule();
+          dataProvider.loadProgress();
+        }
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint("Login error: $e");
+      if (mounted) {
+        String errorMsg = "发生未知错误: $e";
+        if (kIsWeb && e.toString().contains("XMLHttpRequest")) {
+          errorMsg = "Web端存在跨域限制，无法直接访问教务系统。\n请使用 Windows 或 Android 客户端运行。";
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -172,81 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: auth.isLoading ? null : () async {
-                          final username = _usernameController.text.trim();
-                          final password = _passwordController.text.trim();
-
-                          if (username.isEmpty || password.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("请输入学号和密码"), 
-                                backgroundColor: Colors.orange
-                              ),
-                            );
-                            return;
-                          }
-
-                          try {
-                            final error = await auth.login(
-                              username,
-                              password,
-                              verifyCode: _captchaController.text,
-                            );
-
-                            if (!context.mounted) return;
-
-                            if (error != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(error), backgroundColor: Colors.red),
-                              );
-                            } else if (auth.isLoggedIn) {
-                              final dataProvider = Provider.of<DataProvider>(context, listen: false);
-                              
-                              if (!auth.isOfflineMode) {
-                                // Clear cache on manual login to force refresh
-                                await dataProvider.clearCache();
-                                
-                                if (!context.mounted) return;
-
-                                // Start loading all data in parallel
-                                dataProvider.loadGrades(forceRefresh: true);
-                                dataProvider.loadSchedule(forceRefresh: true);
-                                dataProvider.loadProgress(forceRefresh: true);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("网络连接失败，已进入离线模式"), 
-                                    backgroundColor: Colors.orange,
-                                    duration: Duration(seconds: 3),
-                                  ),
-                                );
-                                // Load from cache if available
-                                dataProvider.loadGrades();
-                                dataProvider.loadSchedule();
-                                dataProvider.loadProgress();
-                              }
-
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                              );
-                            }
-                          } catch (e) {
-                            debugPrint("Login error: $e");
-                            if (context.mounted) {
-                              String errorMsg = "发生未知错误: $e";
-                              if (kIsWeb && e.toString().contains("XMLHttpRequest")) {
-                                errorMsg = "Web端存在跨域限制，无法直接访问教务系统。\n请使用 Windows 或 Android 客户端运行。";
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(errorMsg), 
-                                  backgroundColor: Colors.red,
-                                  duration: const Duration(seconds: 5),
-                                ),
-                              );
-                            }
-                          }
-                        },
+                        onPressed: auth.isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF409EFF),
                           foregroundColor: Colors.white,

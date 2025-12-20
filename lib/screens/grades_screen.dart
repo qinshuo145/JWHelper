@@ -46,9 +46,8 @@ class _GradesScreenState extends State<GradesScreen> {
       );
     }
 
-    // Get unique semesters
-    // Sort descending to put latest semester first
-    final rawSemesters = grades.map((e) => e.semester).toSet().toList()..sort((a, b) => b.compareTo(a));
+    // Get unique semesters using optimized getter
+    final rawSemesters = dataProvider.semesterList;
     final allOptions = ['全部', ...rawSemesters];
     
     // Set default selection logic

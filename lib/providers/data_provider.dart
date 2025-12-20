@@ -28,9 +28,33 @@ class DataProvider with ChangeNotifier {
   List<ScheduleItem> _schedule = [];
   bool _scheduleLoading = false;
   bool _scheduleLoaded = false;
+  int _currentWeek = 1;
+  
   List<ScheduleItem> get schedule => _schedule;
   bool get scheduleLoading => _scheduleLoading;
   bool get scheduleLoaded => _scheduleLoaded;
+  int get currentWeek => _currentWeek;
+
+  // Optimized Getters for UI
+  Map<int, List<ScheduleItem>> get scheduleGroupedByDay {
+    final Map<int, List<ScheduleItem>> grouped = {};
+    for (var item in _schedule) {
+      if (!grouped.containsKey(item.dayIndex)) {
+        grouped[item.dayIndex] = [];
+      }
+      grouped[item.dayIndex]!.add(item);
+    }
+    // Sort items within each day
+    for (var key in grouped.keys) {
+      grouped[key]!.sort((a, b) => a.startUnit.compareTo(b.startUnit));
+    }
+    return grouped;
+  }
+
+  List<String> get semesterList {
+    if (_grades.isEmpty) return [];
+    return _grades.map((e) => e.semester).toSet().toList()..sort((a, b) => b.compareTo(a));
+  }
 
   // Progress
   List<ProgressGroup> _progressGroups = [];
@@ -139,6 +163,7 @@ class DataProvider with ChangeNotifier {
   // --- Schedule Methods ---
   String get _scheduleCacheKey => 'schedule_cache_$_username';
   String get _scheduleCacheTimeKey => 'schedule_cache_time_$_username';
+  String get _scheduleStartDayKey => 'schedule_start_day_$_username';
 
   Future<void> loadSchedule({bool forceRefresh = false}) async {
     if (_scheduleLoaded && !forceRefresh) return;
@@ -155,6 +180,7 @@ class DataProvider with ChangeNotifier {
       if (!forceRefresh) {
         final int? lastTime = prefs.getInt(_scheduleCacheTimeKey);
         final String? cachedData = prefs.getString(_scheduleCacheKey);
+        final String? startDayStr = prefs.getString(_scheduleStartDayKey);
 
         if (lastTime != null && cachedData != null) {
           final DateTime lastFetchTime = DateTime.fromMillisecondsSinceEpoch(lastTime);
@@ -164,6 +190,11 @@ class DataProvider with ChangeNotifier {
           if (now.difference(lastFetchTime).inDays < 30) {
             final List<dynamic> decoded = jsonDecode(cachedData);
             _schedule = decoded.map((e) => ScheduleItem.fromJson(e)).toList();
+            
+            if (startDayStr != null) {
+              _calculateCurrentWeek(startDayStr);
+            }
+            
             _scheduleLoaded = true;
             _scheduleLoading = false;
             notifyListeners();
@@ -172,7 +203,15 @@ class DataProvider with ChangeNotifier {
         }
       }
 
-      _schedule = await _scheduleService.getSchedule();
+      var result = await _scheduleService.getSchedule();
+      _schedule = result['items'] as List<ScheduleItem>;
+      String? startDayStr = result['startDay'] as String?;
+      
+      if (startDayStr != null) {
+        _calculateCurrentWeek(startDayStr);
+        await prefs.setString(_scheduleStartDayKey, startDayStr);
+      }
+
       _scheduleLoaded = true;
       
       // Save to cache
@@ -183,9 +222,14 @@ class DataProvider with ChangeNotifier {
       try {
         final prefs = await SharedPreferences.getInstance();
         final String? cachedData = prefs.getString(_scheduleCacheKey);
+        final String? startDayStr = prefs.getString(_scheduleStartDayKey);
+        
         if (cachedData != null) {
            final List<dynamic> decoded = jsonDecode(cachedData);
            _schedule = decoded.map((e) => ScheduleItem.fromJson(e)).toList();
+           if (startDayStr != null) {
+             _calculateCurrentWeek(startDayStr);
+           }
            _scheduleLoaded = true;
         }
       } catch (cacheError) {
@@ -194,6 +238,28 @@ class DataProvider with ChangeNotifier {
     } finally {
       _scheduleLoading = false;
       notifyListeners();
+    }
+  }
+  
+  void _calculateCurrentWeek(String startDayStr) {
+    try {
+      DateTime startDay = DateTime.parse(startDayStr);
+      DateTime now = DateTime.now();
+      // Reset time to midnight for accurate day calculation
+      startDay = DateTime(startDay.year, startDay.month, startDay.day);
+      now = DateTime(now.year, now.month, now.day);
+      
+      int diffDays = now.difference(startDay).inDays;
+      debugPrint("Now: $now, StartDay: $startDay, DiffDays: $diffDays");
+      
+      if (diffDays >= 0) {
+        _currentWeek = (diffDays / 7).floor() + 1;
+      } else {
+        _currentWeek = 1; // Before semester starts
+      }
+      debugPrint("Calculated Current Week: $_currentWeek (Start: $startDayStr)");
+    } catch (e) {
+      debugPrint("Error calculating current week: $e");
     }
   }
 

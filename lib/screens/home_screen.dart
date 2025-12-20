@@ -141,10 +141,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text("教务小助手", style: TextStyle(color: Colors.black)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "教务小助手",
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            if (dataProvider.currentWeek > 0)
+              Text(
+                "第${dataProvider.currentWeek}周",
+                style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.normal),
+              ),
+          ],
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -156,12 +171,18 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFF409EFF)),
             tooltip: "退出登录",
-            onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).logout();
-              Provider.of<DataProvider>(context, listen: false).clearAll();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
+            onPressed: () async {
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              final data = Provider.of<DataProvider>(context, listen: false);
+              
+              await auth.logout();
+              data.clearAll();
+              
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
             },
           ),
         ],
