@@ -129,13 +129,19 @@ Map<String, dynamic> _parseProgressHtml(String html) {
       
       if (text.contains("展开") || text.contains("折叠") || text.isEmpty) continue;
       
-      RegExp regExp = RegExp(r'(.+)\((\d+(\.\d+)?)/(\d+(\.\d+)?)\)');
+      // Modified regex to handle "未设置" (Not Set) in required credits
+      RegExp regExp = RegExp(r'(.+)\((\d+(?:\.\d+)?)/((?:\d+(?:\.\d+)?)|未设置)\)');
       var match = regExp.firstMatch(text);
       
       if (match != null) {
         String name = match.group(1)!.trim();
         double earned = double.parse(match.group(2)!);
-        double required = double.parse(match.group(4)!);
+        
+        double required = -1;
+        String requiredStr = match.group(3)!;
+        if (requiredStr != "未设置") {
+          required = double.parse(requiredStr);
+        }
         
         String? id = _extractId(a);
         if (id == null && i + 1 < links.length) {

@@ -189,7 +189,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 12),
-                      if (group.name != "方案外课程") ...[
+                      if (group.name != "方案外课程" && group.required > 0) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -212,7 +212,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           ),
                           if (group.name != "方案外课程")
                             Text(
-                              "要求: ${group.required}",
+                              group.required > 0 ? "要求: ${group.required}" : "要求: -",
                               style: const TextStyle(color: Colors.grey),
                             ),
                         ],
