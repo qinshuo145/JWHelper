@@ -23,6 +23,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
     final items = dataProvider.schedule;
+    final theme = Theme.of(context);
 
     if (dataProvider.scheduleLoading && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -39,7 +40,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       child: Column(
         children: [
           Container(
-            color: Colors.white,
+            color: theme.cardTheme.color,
             child: const TabBar(
               isScrollable: false,
               labelPadding: EdgeInsets.zero,
@@ -157,10 +158,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF303133),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -215,10 +216,10 @@ class _CourseGroupState extends State<_CourseGroup> {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Theme.of(context).cardTheme.color?.withValues(alpha: 0.8) ?? Colors.white.withValues(alpha: 0.8),
                     shape: BoxShape.circle,
-                    boxShadow: const [
-                       BoxShadow(color: Colors.black12, blurRadius: 2)
+                    boxShadow: [
+                       BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 2)
                     ]
                   ),
                   child: Icon(
@@ -243,28 +244,29 @@ class _CourseGroupState extends State<_CourseGroup> {
   Widget _buildCourseCard(ScheduleItem item, {bool isSecondary = false}) {
     bool isCurrent = widget.currentWeek >= item.weekStart && widget.currentWeek <= item.weekEnd;
     bool isFinished = widget.currentWeek > item.weekEnd;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     Color bgColor;
     Color accentColor;
     Color textColor;
     
     if (isCurrent) {
-      bgColor = const Color(0xFFF0F9EB);
+      bgColor = isDark ? const Color(0xFF1B2E1B) : const Color(0xFFF0F9EB);
       accentColor = const Color(0xFF67C23A);
-      textColor = Colors.black;
+      textColor = isDark ? Colors.white : Colors.black;
     } else if (isFinished) {
-      bgColor = Colors.grey[100]!;
+      bgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[100]!;
       accentColor = Colors.grey;
       textColor = Colors.grey;
     } else {
-      bgColor = Colors.white;
+      bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
       accentColor = const Color(0xFF409EFF);
-      textColor = Colors.black;
+      textColor = isDark ? Colors.white : Colors.black;
     }
 
     if (isSecondary) {
        // Secondary items might override bg slightly if not current
-       if (!isCurrent && !isFinished) bgColor = Colors.grey[50]!;
+       if (!isCurrent && !isFinished) bgColor = isDark ? const Color(0xFF252525) : Colors.grey[50]!;
     }
 
     return Card(
@@ -307,7 +309,7 @@ class _CourseGroupState extends State<_CourseGroup> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isCurrent ? const Color(0xFFF0F9EB) : Colors.grey[100],
+                color: isCurrent ? (isDark ? const Color(0xFF1B2E1B) : const Color(0xFFF0F9EB)) : (isDark ? const Color(0xFF2C2C2C) : Colors.grey[100]),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(

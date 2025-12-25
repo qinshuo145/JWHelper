@@ -71,27 +71,27 @@ class _GradesScreenState extends State<GradesScreen> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           child: Row(
             children: [
               const Icon(Icons.filter_list, size: 20, color: Colors.grey),
               const SizedBox(width: 8),
-              const Text("学期筛选: ", style: TextStyle(fontSize: 16)),
+              Text("学期筛选: ", style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(width: 16),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF409EFF)),
-                      style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w500),
-                      dropdownColor: Colors.white,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.w500),
+                      dropdownColor: Theme.of(context).cardTheme.color,
                       borderRadius: BorderRadius.circular(12),
                       value: _selectedSemester,
                       items: allOptions.map((String value) {
@@ -132,7 +132,7 @@ class _GradesScreenState extends State<GradesScreen> {
                       // 提取 Card 构建逻辑
                       final card = Card(
                         elevation: 0,
-                        color: Colors.white,
+                        color: Theme.of(context).cardTheme.color,
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -157,7 +157,7 @@ class _GradesScreenState extends State<GradesScreen> {
                                     decoration: BoxDecoration(
                                       color: double.tryParse(grade.score) != null && double.parse(grade.score) < 60 
                                           ? Colors.red.withValues(alpha: 0.1) 
-                                          : const Color(0xFFECF5FF),
+                                          : const Color(0xFF409EFF).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(

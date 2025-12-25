@@ -26,6 +26,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
     final groups = dataProvider.progressGroups;
+    final theme = Theme.of(context);
 
     Widget buildCourseItem(ProgressCourse course) {
       return Container(
@@ -39,16 +40,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(course.name, style: const TextStyle(fontSize: 14)),
+                  Text(course.name, style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface)),
                   const SizedBox(height: 2),
-                  Text("学分: ${course.credit}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text("学分: ${course.credit}", style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: course.isPassed ? const Color(0xFFF0F9EB) : const Color(0xFFFEF0F0),
+                color: course.isPassed 
+                    ? (theme.brightness == Brightness.dark ? const Color(0xFF1B2E1B) : const Color(0xFFF0F9EB))
+                    : (theme.brightness == Brightness.dark ? const Color(0xFF2E1B1B) : const Color(0xFFFEF0F0)),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -171,19 +174,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
             return Card(
               elevation: 0,
-              color: Colors.white,
+              color: theme.cardTheme.color,
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
               ),
               child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                data: theme.copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   title: Text(
                     group.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +197,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: progress,
-                            backgroundColor: const Color(0xFFEBEEF5),
+                            backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF2C2C2C) : const Color(0xFFEBEEF5),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               progress >= 1 ? const Color(0xFF67C23A) : const Color(0xFF409EFF),
                             ),
@@ -213,7 +216,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           if (group.name != "方案外课程")
                             Text(
                               group.required > 0 ? "要求: ${group.required}" : "要求: -",
-                              style: const TextStyle(color: Colors.grey),
+                              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                             ),
                         ],
                       ),
@@ -231,9 +234,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         child: Center(child: CircularProgressIndicator()),
                       )
                     else if (group.courses!.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text("该类别下暂无课程", style: TextStyle(color: Colors.grey)),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text("该类别下暂无课程", style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                       )
                     else ...[
                       ...group.courses!.where((c) => c.score != '-').map((course) => buildCourseItem(course)),

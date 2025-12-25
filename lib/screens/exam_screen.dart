@@ -194,11 +194,11 @@ class _ExamScreenState extends State<ExamScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text("考试安排", style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
+        title: Text("考试安排", style: TextStyle(color: theme.colorScheme.onSurface)),
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -206,9 +206,9 @@ class _ExamScreenState extends State<ExamScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFECF5FF),
+              color: theme.brightness == Brightness.dark ? const Color(0xFF409EFF).withValues(alpha: 0.2) : const Color(0xFFECF5FF),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFD9ECFF)),
+              border: Border.all(color: theme.brightness == Brightness.dark ? const Color(0xFF409EFF).withValues(alpha: 0.3) : const Color(0xFFD9ECFF)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -217,9 +217,10 @@ class _ExamScreenState extends State<ExamScreen> {
                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF409EFF), size: 18),
                 style: const TextStyle(color: Color(0xFF409EFF), fontWeight: FontWeight.bold, fontSize: 14),
                 borderRadius: BorderRadius.circular(12),
-                items: const [
-                  DropdownMenuItem(value: "济南", child: Text("济南校区")),
-                  DropdownMenuItem(value: "日照", child: Text("日照校区")),
+                dropdownColor: theme.cardTheme.color,
+                items: [
+                  DropdownMenuItem(value: "济南", child: Text("济南校区", style: TextStyle(color: theme.colorScheme.onSurface))),
+                  DropdownMenuItem(value: "日照", child: Text("日照校区", style: TextStyle(color: theme.colorScheme.onSurface))),
                 ],
                 onChanged: (value) {
                   if (value != null && value != _selectedCampus) {
@@ -246,7 +247,7 @@ class _ExamScreenState extends State<ExamScreen> {
           // Filters
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            color: theme.cardTheme.color,
             child: Column(
               children: [
                 // Semester Dropdown
@@ -257,30 +258,31 @@ class _ExamScreenState extends State<ExamScreen> {
                     return DropdownButtonFormField<Semester>(
                       initialValue: effectiveSelectedSemester,
                       menuMaxHeight: 300,
-                      hint: const Text("请选择学期"),
+                      hint: Text("请选择学期", style: TextStyle(color: theme.hintColor)),
                       decoration: InputDecoration(
                         labelText: "学期",
+                        labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                         prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20, color: Color(0xFF409EFF)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
                         ),
                         focusedBorder: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(12)),
                           borderSide: BorderSide(color: Color(0xFF409EFF), width: 2),
                         ),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                       icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Color(0xFF409EFF)),
-                      dropdownColor: Colors.white,
+                      dropdownColor: theme.cardTheme.color,
                       borderRadius: BorderRadius.circular(12),
-                      style: const TextStyle(color: Colors.black87, fontSize: 15),
+                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
                       items: (semesters.isEmpty || _initLoading || _refreshingFilters) ? null : semesters.map((s) {
                         return DropdownMenuItem(
                           value: s,
@@ -311,30 +313,31 @@ class _ExamScreenState extends State<ExamScreen> {
                       key: ValueKey("rounds_$_selectedCampus"),
                       initialValue: effectiveSelectedRound,
                       menuMaxHeight: 300,
-                      hint: const Text("请选择考试批次"),
+                      hint: Text("请选择考试批次", style: TextStyle(color: theme.hintColor)),
                       decoration: InputDecoration(
                         labelText: "考试批次",
+                        labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                         prefixIcon: const Icon(Icons.layers_outlined, size: 20, color: Color(0xFF409EFF)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
                         ),
                         focusedBorder: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(12)),
                           borderSide: BorderSide(color: Color(0xFF409EFF), width: 2),
                         ),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                       icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Color(0xFF409EFF)),
-                      dropdownColor: Colors.white,
+                      dropdownColor: theme.cardTheme.color,
                       borderRadius: BorderRadius.circular(12),
-                      style: const TextStyle(color: Colors.black87, fontSize: 15),
+                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
                       items: (rounds.isEmpty || _roundsLoading || _refreshingFilters) ? null : rounds.map((r) {
                         return DropdownMenuItem(
                           value: r,
@@ -464,19 +467,19 @@ class _ExamScreenState extends State<ExamScreen> {
                     Expanded(
                       child: Text(
                         exam.courseName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF303133),
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F7FF),
+                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1890FF).withValues(alpha: 0.2) : const Color(0xFFE6F7FF),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF91D5FF)),
+                        border: Border.all(color: const Color(0xFF91D5FF).withValues(alpha: 0.5)),
                       ),
                       child: Text(
                         exam.type,
@@ -488,7 +491,7 @@ class _ExamScreenState extends State<ExamScreen> {
                 const SizedBox(height: 4),
                 Text(
                   "课程号: ${exam.courseNo}",
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF909399)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 const Divider(height: 24),
                 _buildInfoRow(Icons.access_time, "时间", exam.time),
@@ -509,13 +512,13 @@ class _ExamScreenState extends State<ExamScreen> {
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF909399)),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         const SizedBox(width: 8),
-        Text("$label: ", style: const TextStyle(color: Color(0xFF909399))),
+        Text("$label: ", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(color: Color(0xFF606266), fontWeight: FontWeight.w500),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
           ),
         ),
       ],

@@ -129,9 +129,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -142,14 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
               const Icon(Icons.school_rounded, size: 80, color: Color(0xFF409EFF))
                   .animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "教务小助手",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF303133)),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
               ).animate().fadeIn(delay: 200.ms).moveY(begin: 10, end: 0),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "请使用学号和密码登录",
-                style: TextStyle(fontSize: 14, color: Color(0xFF909399)),
+                style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
               ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: 40),
 
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 constraints: const BoxConstraints(maxWidth: 400),
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardTheme.color,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: const Icon(Icons.person_outline),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         filled: true,
-                        fillColor: const Color(0xFFFAFAFA),
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         filled: true,
-                        fillColor: const Color(0xFFFAFAFA),
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                     ),
                     
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 prefixIcon: const Icon(Icons.security),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                 filled: true,
-                                fillColor: const Color(0xFFFAFAFA),
+                                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                               ),
                             ),
                           ),
@@ -238,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text("记住密码", style: TextStyle(fontSize: 14, color: Color(0xFF606266))),
+                        Text("记住密码", style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                         const Spacer(),
                         SizedBox(
                           height: 24,
@@ -251,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text("自动登录", style: TextStyle(fontSize: 14, color: Color(0xFF606266))),
+                        Text("自动登录", style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                       ],
                     ),
 

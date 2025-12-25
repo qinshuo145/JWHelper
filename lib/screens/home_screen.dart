@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_provider.dart';
+import '../providers/theme_provider.dart';
 import '../api/update_service.dart';
 import 'grades_screen.dart';
 import 'schedule_screen.dart';
@@ -116,6 +117,46 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                String themeText;
+                IconData icon;
+                switch (themeProvider.themeMode) {
+                  case ThemeMode.system:
+                    themeText = "跟随系统";
+                    icon = Icons.brightness_auto;
+                    break;
+                  case ThemeMode.light:
+                    themeText = "浅色模式";
+                    icon = Icons.brightness_7;
+                    break;
+                  case ThemeMode.dark:
+                    themeText = "深色模式";
+                    icon = Icons.brightness_2;
+                    break;
+                }
+                return InkWell(
+                  onTap: () {
+                    themeProvider.toggleTheme();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          "主题: $themeText",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
             _buildUpdateSection(),
             const SizedBox(height: 12),
             const Text(
@@ -144,14 +185,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final dataProvider = Provider.of<DataProvider>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               "教务小助手",
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             if (dataProvider.currentWeek > 0)
               Text(
@@ -160,7 +200,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
           ],
         ),
-        backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -191,7 +230,6 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        backgroundColor: Colors.white,
         elevation: 2,
         destinations: const [ 
           NavigationDestination(
